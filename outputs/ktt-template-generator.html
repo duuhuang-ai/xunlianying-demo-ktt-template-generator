@@ -1,0 +1,1177 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>快团团商品海报生成器</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ff4d57'/%3E%3Ctext x='32' y='42' font-size='34' text-anchor='middle' fill='white'%3E团%3C/text%3E%3C/svg%3E">
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --ink: #1f2329;
+      --muted: #7b8494;
+      --line: #e6e8ee;
+      --soft: #f0f2f5;
+      --accent: #ff4d57;
+      --accent-soft: #fff3f4;
+      --accent-2: #13a8c7;
+      --radius: 8px;
+      --shadow: 0 18px 50px rgba(31, 35, 41, .08);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(360px, 520px) 1fr;
+    }
+
+    .editor {
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      padding: 24px;
+      overflow: auto;
+      max-height: 100vh;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+    }
+
+    .mark {
+      width: 28px;
+      height: 28px;
+      display: grid;
+      place-items: center;
+      border: 1.5px solid var(--ink);
+      border-radius: 6px;
+      font-size: 18px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.2;
+      letter-spacing: 0;
+    }
+
+    .badge {
+      margin-left: 6px;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: #dff7eb;
+      color: #12814d;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .section {
+      padding: 18px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .section:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .section-title {
+      margin: 0 0 12px;
+      color: #5f6878;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .template-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .template-option {
+      border: 1px solid #d8dde6;
+      background: #fff;
+      border-radius: 8px;
+      padding: 9px;
+      cursor: pointer;
+      text-align: center;
+      color: #3b4351;
+    }
+
+    .template-option.active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 18%, transparent);
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .swatch {
+      height: 28px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 65%, #ffffff));
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      color: #697386;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    input[type="text"], input[type="number"], textarea, select {
+      width: 100%;
+      border: 1px solid #d9dee8;
+      border-radius: 7px;
+      background: #fff;
+      color: var(--ink);
+      padding: 11px 12px;
+      outline: none;
+      transition: border .15s, box-shadow .15s;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+    }
+
+    textarea {
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    .hint {
+      margin-top: 6px;
+      color: #8a93a3;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .file-field {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: center;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      color: #6b7484;
+      font-size: 13px;
+    }
+
+    .points {
+      display: grid;
+      gap: 9px;
+    }
+
+    .point-row {
+      display: grid;
+      grid-template-columns: 1fr 40px;
+      gap: 8px;
+    }
+
+    .icon-btn {
+      border: 0;
+      border-radius: 7px;
+      background: #ffe8ea;
+      color: var(--accent);
+      cursor: pointer;
+      font-size: 18px;
+    }
+
+    .add-btn, .export-btn, .reset-btn {
+      width: 100%;
+      border: 1px dashed #cbd2dd;
+      border-radius: 7px;
+      background: #fff;
+      color: #667085;
+      padding: 11px 12px;
+      cursor: pointer;
+    }
+
+    .export-btn {
+      border: 0;
+      background: var(--ink);
+      color: white;
+      font-weight: 750;
+    }
+
+    .reset-btn {
+      border-style: solid;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      position: sticky;
+      bottom: 0;
+      padding-top: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0), #fff 22%);
+    }
+
+    .preview-wrap {
+      min-height: 100vh;
+      padding: 32px;
+      display: grid;
+      place-items: center;
+      background:
+        linear-gradient(90deg, rgba(31,35,41,.04) 1px, transparent 1px),
+        linear-gradient(180deg, rgba(31,35,41,.04) 1px, transparent 1px);
+      background-size: 28px 28px;
+    }
+
+    .phone {
+      width: min(100%, 390px, calc((100vh - 48px) * 0.5625));
+      aspect-ratio: 720 / 1280;
+      border-radius: 18px;
+      overflow: hidden;
+      background: white;
+      box-shadow: var(--shadow);
+      display: block;
+      transform-origin: center;
+    }
+
+    .preview-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      background: #fff;
+    }
+
+    .poster {
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .poster-head {
+      height: 48px;
+      flex: 0 0 48px;
+      background: var(--accent);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+    }
+
+    .poster-brand {
+      font-size: 14px;
+      font-weight: 850;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 220px;
+    }
+
+    .poster-tag {
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,.25);
+      font-size: 13px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .poster-body {
+      padding: 10px 18px 0;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .poster-title {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.12;
+      font-weight: 900;
+      letter-spacing: 0;
+      display: -webkit-box;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .poster-subtitle {
+      margin: 5px 0 8px;
+      color: #7d8795;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.4;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      overflow-wrap: anywhere;
+      white-space: nowrap;
+    }
+
+    .main-image {
+      width: 62%;
+      aspect-ratio: 3 / 4;
+      flex: 0 0 auto;
+      justify-self: center;
+      align-self: center;
+      border-radius: 10px;
+      background: #f5f6f8;
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+      color: #b0b8c6;
+      font-size: 16px;
+      box-shadow: 0 12px 24px rgba(31, 35, 41, .12);
+    }
+
+    .main-image img, .qr-box img {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .main-image .image-fg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      max-width: none;
+      max-height: none;
+      object-fit: contain;
+    }
+
+    .qr-box img {
+      object-fit: cover;
+    }
+
+    .selling-points {
+      display: grid;
+      gap: 5px;
+      margin: 9px 0 9px;
+    }
+
+    .selling-point {
+      display: grid;
+      grid-template-columns: 22px 1fr;
+      align-items: start;
+      gap: 9px;
+      font-size: 13px;
+      line-height: 1.25;
+      font-weight: 700;
+    }
+
+    .selling-point span:last-child {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      overflow-wrap: anywhere;
+      white-space: nowrap;
+    }
+
+    .num {
+      width: 20px;
+      height: 20px;
+      display: grid;
+      place-items: center;
+      border-radius: 999px;
+      background: var(--accent);
+      color: white;
+      font-weight: 900;
+      font-size: 12px;
+    }
+
+    .price-card {
+      border: 1.5px solid color-mix(in srgb, var(--accent) 30%, #fff);
+      border-radius: 12px;
+      background: linear-gradient(180deg, var(--accent-soft), #fff);
+      padding: 9px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .price {
+      color: var(--accent);
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+      min-width: 0;
+    }
+
+    .currency {
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .sale {
+      font-size: 28px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .original {
+      color: #a2aab8;
+      font-size: 13px;
+      text-decoration: line-through;
+      white-space: nowrap;
+    }
+
+    .save {
+      border-radius: 999px;
+      background: var(--accent);
+      color: white;
+      padding: 8px 13px;
+      font-weight: 900;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .leader-note {
+      background: #f4f6f9;
+      border-radius: 11px;
+      padding: 8px 12px;
+      color: #3d4655;
+      font-size: 13px;
+      line-height: 1.3;
+      margin-bottom: 8px;
+      display: -webkit-box;
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+    }
+
+    .leader-note strong {
+      color: var(--accent);
+    }
+
+    .divider {
+      border-top: 1px dashed #e1e5ed;
+      margin: 0 -18px 8px;
+    }
+
+    .qr-row {
+      display: grid;
+      grid-template-columns: 58px 1fr;
+      gap: 12px;
+      align-items: center;
+      margin-top: auto;
+    }
+
+    .qr-box {
+      width: 58px;
+      height: 58px;
+      border-radius: 10px;
+      background: #eef0f4;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      color: #b0b8c6;
+      font-weight: 750;
+    }
+
+    .cta-main {
+      font-size: 16px;
+      font-weight: 950;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      overflow-wrap: anywhere;
+      white-space: nowrap;
+    }
+
+    .cta-sub {
+      margin-top: 4px;
+      color: #7f8998;
+      font-size: 13px;
+      font-weight: 650;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      overflow-wrap: anywhere;
+      white-space: nowrap;
+    }
+
+    .footer {
+      color: #7f8998;
+      font-size: 13px;
+      line-height: 1.35;
+      padding: 8px 0 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      overflow-wrap: anywhere;
+      white-space: nowrap;
+    }
+
+    .poster.clean {
+      --accent: #13a8c7;
+      --accent-soft: #edfafd;
+    }
+
+    .poster.clean .poster-head {
+      background: #fff;
+      color: var(--ink);
+      border-bottom: 4px solid var(--accent);
+    }
+
+    .poster.clean .poster-tag {
+      color: white;
+      background: var(--accent);
+    }
+
+    .poster.boom {
+      --accent: #ff6c35;
+      --accent-soft: #fff4ee;
+    }
+
+    .poster.boom .main-image { border: 3px solid #ffe0d1; }
+
+    @media (max-width: 960px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .editor {
+        max-height: none;
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .preview-wrap {
+        min-height: auto;
+        padding: 22px 14px 34px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .editor {
+        padding: 18px 14px;
+      }
+
+      .template-row, .grid-2 {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <section class="editor" aria-label="素材信息填写">
+      <div class="brand">
+        <div class="mark">🛒</div>
+        <h1>快团团素材生成器</h1>
+        <span class="badge">本地版</span>
+      </div>
+
+      <div class="section">
+        <p class="section-title">版式模板</p>
+        <div class="template-row" role="group" aria-label="选择版式">
+          <button class="template-option active" type="button" data-template="classic">
+            <div class="swatch" style="--accent:#ff4d57"></div>
+            居中促销
+          </button>
+          <button class="template-option" type="button" data-template="clean">
+            <div class="swatch" style="--accent:#13a8c7"></div>
+            左图清单
+          </button>
+          <button class="template-option" type="button" data-template="boom">
+            <div class="swatch" style="--accent:#ff6c35"></div>
+            大图爆款
+          </button>
+        </div>
+      </div>
+
+      <div class="section">
+        <p class="section-title">基础信息</p>
+        <div class="field">
+          <label for="topTag">顶部标签</label>
+          <input id="topTag" type="text" value="今日开团">
+        </div>
+        <div class="field">
+          <label for="brandName">团长昵称 / 品牌</label>
+          <input id="brandName" type="text" value="小美优选·团长">
+        </div>
+        <div class="field">
+          <label for="productTitle">商品标题</label>
+          <input id="productTitle" type="text" value="【新疆直发】阿克苏冰糖心苹果 5斤装">
+        </div>
+        <div class="field">
+          <label for="subtitle">副标题 / 一句话卖点</label>
+          <input id="subtitle" type="text" value="咬一口爆汁甜脆 · 产地现摘现发">
+        </div>
+      </div>
+
+      <div class="section">
+        <p class="section-title">图片素材</p>
+        <div class="field">
+          <label for="productImage">商品主图</label>
+          <input id="productImage" type="file" accept="image/*">
+          <div class="hint">推荐 3:4；方图会自动按 1:1 展示，预览和导出都只在本机处理。</div>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="imageRatio">图片展示比例</label>
+            <select id="imageRatio">
+              <option value="auto">自动识别</option>
+              <option value="3:4">3:4 竖图</option>
+              <option value="1:1">1:1 方图</option>
+              <option value="free">保留原图比例</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="imageFit">图片适配方式</label>
+            <select id="imageFit">
+              <option value="contain">完整展示</option>
+              <option value="cover">铺满裁切</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="qrImage">二维码</label>
+          <input id="qrImage" type="file" accept="image/*">
+          <div class="hint">上传团长二维码或商品码。</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <p class="section-title">核心卖点</p>
+        <div id="points" class="points"></div>
+        <button id="addPoint" class="add-btn" type="button">+ 添加一条卖点</button>
+      </div>
+
+      <div class="section">
+        <p class="section-title">价格和转化文案</p>
+        <div class="grid-2">
+          <div class="field">
+            <label for="originalPrice">原价 ¥</label>
+            <input id="originalPrice" type="number" value="39.9" step="0.1">
+          </div>
+          <div class="field">
+            <label for="salePrice">团购价 ¥</label>
+            <input id="salePrice" type="number" value="19.9" step="0.1">
+          </div>
+        </div>
+        <div class="field">
+          <label for="leaderNote">团长说</label>
+          <textarea id="leaderNote">我自己吃了两箱，真的甜！这个价格基本就是产地价了，库存不多，手慢无～</textarea>
+        </div>
+        <div class="field">
+          <label for="shipping">规格 / 发货信息</label>
+          <input id="shipping" type="text" value="5斤/箱 · 默认圆通 · 48h 内发货 · 坏果包赔">
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label for="buttonMain">按钮主文案</label>
+            <input id="buttonMain" type="text" value="长按识别 跟团购买">
+          </div>
+          <div class="field">
+            <label for="buttonSub">按钮副文案</label>
+            <input id="buttonSub" type="text" value="早买早发 · 手慢无">
+          </div>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="resetDemo" class="reset-btn" type="button">恢复示例</button>
+        <button id="exportPng" class="export-btn" type="button">导出 PNG</button>
+      </div>
+    </section>
+
+    <section class="preview-wrap" aria-label="素材预览">
+      <article id="poster" class="phone">
+        <canvas id="previewCanvas" class="preview-canvas" width="720" height="1280" aria-label="素材预览画布"></canvas>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const state = {
+      template: "classic",
+      productImage: "",
+      qrImage: "",
+      points: [
+        "产地直发，没有中间商加价",
+        "冰糖心占比高，一口爆汁甜",
+        "坏果包赔，售后无忧"
+      ]
+    };
+
+    const fields = [
+      "topTag", "brandName", "productTitle", "subtitle", "originalPrice",
+      "salePrice", "leaderNote", "shipping", "buttonMain", "buttonSub", "imageRatio", "imageFit"
+    ];
+
+    function value(id) {
+      return $(id).value.trim();
+    }
+
+    function money(num) {
+      const parsed = Number(num);
+      if (!Number.isFinite(parsed)) return "0.00";
+      return parsed.toFixed(2);
+    }
+
+    function renderPointsEditor() {
+      $("points").innerHTML = "";
+      state.points.forEach((point, index) => {
+        const row = document.createElement("div");
+        row.className = "point-row";
+
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = point;
+        input.setAttribute("aria-label", `卖点 ${index + 1}`);
+        input.addEventListener("input", () => {
+          state.points[index] = input.value;
+          render();
+        });
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "icon-btn";
+        remove.textContent = "×";
+        remove.title = "删除这条卖点";
+        remove.addEventListener("click", () => {
+          state.points.splice(index, 1);
+          renderPointsEditor();
+          render();
+        });
+
+        row.append(input, remove);
+        $("points").append(row);
+      });
+    }
+
+    function render() {
+      renderCanvasPreview();
+    }
+
+    function escapeHtml(text) {
+      return text.replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    function readFileAsDataUrl(file, callback) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => callback(String(reader.result));
+      reader.readAsDataURL(file);
+    }
+
+    function wrapText(ctx, text, x, y, maxWidth, lineHeight, maxLines) {
+      const words = Array.from(text || "");
+      let line = "";
+      let lines = [];
+      for (const char of words) {
+        const test = line + char;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          lines.push(line);
+          line = char;
+          if (lines.length === maxLines) break;
+        } else {
+          line = test;
+        }
+      }
+      if (lines.length < maxLines && line) lines.push(line);
+      if (lines.length === maxLines && words.join("").length > lines.join("").length) {
+        lines[maxLines - 1] = lines[maxLines - 1].slice(0, -1) + "…";
+      }
+      lines.forEach((item, index) => ctx.fillText(item, x, y + index * lineHeight));
+      return y + lines.length * lineHeight;
+    }
+
+    function roundedRect(ctx, x, y, w, h, r) {
+      const radius = Math.min(r, w / 2, h / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + radius, y);
+      ctx.arcTo(x + w, y, x + w, y + h, radius);
+      ctx.arcTo(x + w, y + h, x, y + h, radius);
+      ctx.arcTo(x, y + h, x, y, radius);
+      ctx.arcTo(x, y, x + w, y, radius);
+      ctx.closePath();
+    }
+
+    function drawImageCover(ctx, img, x, y, w, h) {
+      const scale = Math.max(w / img.width, h / img.height);
+      const sw = w / scale;
+      const sh = h / scale;
+      const sx = (img.width - sw) / 2;
+      const sy = (img.height - sh) / 2;
+      ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+    }
+
+    function drawImageContain(ctx, img, x, y, w, h) {
+      const scale = Math.min(w / img.width, h / img.height);
+      const dw = img.width * scale;
+      const dh = img.height * scale;
+      const dx = x + (w - dw) / 2;
+      const dy = y + (h - dh) / 2;
+      ctx.drawImage(img, dx, dy, dw, dh);
+    }
+
+    function selectedImageRatio(img) {
+      const mode = value("imageRatio") || "auto";
+      if (mode === "3:4") return 3 / 4;
+      if (mode === "1:1") return 1;
+      if (mode === "free" && img) return Math.max(.55, Math.min(1.3, img.width / img.height));
+      if (!img) return 3 / 4;
+      const sourceRatio = img.width / img.height;
+      if (sourceRatio >= .9 && sourceRatio <= 1.1) return 1;
+      return Math.max(.55, Math.min(1.3, sourceRatio));
+    }
+
+    function drawProductImage(ctx, img, x, y, w, h) {
+      ctx.save();
+      roundedRect(ctx, x, y, w, h, 22);
+      ctx.clip();
+      if (!img) {
+        ctx.fillStyle = "#eef1f5";
+        ctx.fillRect(x, y, w, h);
+        ctx.fillStyle = "#8e98a8";
+        ctx.font = "500 28px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("商品主图", x + w / 2, y + h / 2 + 10);
+        ctx.textAlign = "left";
+      } else if (value("imageFit") === "cover") {
+        drawImageCover(ctx, img, x, y, w, h);
+      } else {
+        // When a manually selected frame and the source ratio differ, use a softened
+        // copy of the photo as the matte instead of exposing a plain white gap.
+        ctx.filter = "blur(20px)";
+        drawImageCover(ctx, img, x - 20, y - 20, w + 40, h + 40);
+        ctx.filter = "none";
+        ctx.fillStyle = "rgba(255,255,255,.26)";
+        ctx.fillRect(x, y, w, h);
+        drawImageContain(ctx, img, x, y, w, h);
+      }
+      ctx.restore();
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve) => {
+        if (!src) return resolve(null);
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = src;
+      });
+    }
+
+    function themeColor() {
+      if (state.template === "clean") return "#13a8c7";
+      if (state.template === "boom") return "#ff6c35";
+      return "#ff4d57";
+    }
+
+    function drawPoster(ctx, productImg, qrImg) {
+      const accent = themeColor();
+
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, 720, 1280);
+
+      ctx.fillStyle = state.template === "clean" ? "#ffffff" : accent;
+      ctx.fillRect(0, 0, 720, 90);
+      if (state.template === "clean") {
+        ctx.fillStyle = accent;
+        ctx.fillRect(0, 86, 720, 4);
+      }
+
+      ctx.fillStyle = state.template === "clean" ? "#1f2329" : "#ffffff";
+      ctx.font = "800 26px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      wrapText(ctx, value("brandName") || "团长昵称", 36, 58, 430, 28, 1);
+
+      const tag = value("topTag") || "今日开团";
+      ctx.font = "800 24px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      const tagW = Math.min(220, ctx.measureText(tag).width + 48);
+      roundedRect(ctx, 720 - tagW - 36, 20, tagW, 50, 25);
+      ctx.fillStyle = state.template === "clean" ? accent : "rgba(255,255,255,.25)";
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(tag, 720 - tagW - 12, 53);
+
+      ctx.fillStyle = "#1f2329";
+      ctx.font = "900 36px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      const titleBottom = wrapText(ctx, value("productTitle") || "商品标题", 36, 132, 648, 40, 2);
+
+      const subtitleText = value("subtitle") || "一句话卖点";
+      ctx.font = "700 23px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      const subtitleW = Math.min(600, ctx.measureText(subtitleText).width + 34);
+      const subtitleY = titleBottom + 10;
+      roundedRect(ctx, 36, subtitleY, subtitleW, 42, 21);
+      ctx.fillStyle = "#f4f6f9";
+      ctx.fill();
+      ctx.fillStyle = "#748092";
+      wrapText(ctx, subtitleText, 53, subtitleY + 28, subtitleW - 34, 28, 1);
+
+      const pointItems = state.points.filter(Boolean).slice(0, 6);
+      const sourceRatio = state.template === "boom"
+        ? Math.max(1.05, selectedImageRatio(productImg))
+        : selectedImageRatio(productImg);
+      const baseImageHeight = Math.max(390, 510 - Math.max(0, pointItems.length - 3) * 38);
+      const maxImageWidth = state.template === "boom" ? 648 : state.template === "clean" ? 350 : 500;
+      const imgH = Math.min(baseImageHeight, maxImageWidth / sourceRatio);
+      const imgW = imgH * sourceRatio;
+      const imgX = state.template === "clean" ? 36 : (720 - imgW) / 2;
+      const imgY = subtitleY + 56;
+      ctx.save();
+      ctx.shadowColor = "rgba(31, 35, 41, .16)";
+      ctx.shadowBlur = 24;
+      ctx.shadowOffsetY = 12;
+      roundedRect(ctx, imgX, imgY, imgW, imgH, 22);
+      ctx.fillStyle = "#ffffff";
+      ctx.fill();
+      ctx.restore();
+
+      drawProductImage(ctx, productImg, imgX, imgY, imgW, imgH);
+
+      let y = state.template === "clean" ? imgY + 40 : imgY + imgH + 24;
+      ctx.textBaseline = "alphabetic";
+      pointItems.forEach((point, index) => {
+        const pointX = state.template === "clean" ? imgX + imgW + 30 : 90;
+        const markerX = state.template === "clean" ? imgX + imgW + 16 : 58;
+        const pointWidth = state.template === "clean" ? 720 - pointX - 28 : 590;
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.arc(markerX, y - 8, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "900 20px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText(String(index + 1), markerX, y);
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#1f2329";
+        ctx.font = "700 24px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+        y = wrapText(ctx, point, pointX, y, pointWidth, 30, state.template === "clean" ? 2 : 1) + 8;
+      });
+
+      if (state.template === "clean") y = Math.max(y, imgY + imgH + 24);
+
+      y += 4;
+      roundedRect(ctx, 36, y, 648, 86, 18);
+      ctx.fillStyle = state.template === "clean" ? "#eefafd" : state.template === "boom" ? "#fff4ee" : "#fff3f4";
+      ctx.fill();
+      ctx.strokeStyle = state.template === "clean" ? "#bfeef6" : state.template === "boom" ? "#ffd9c6" : "#ffd6da";
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = accent;
+      ctx.font = "900 31px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      ctx.fillText("¥", 68, y + 56);
+      ctx.font = "950 52px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      ctx.fillText(money(value("salePrice")), 108, y + 60);
+      ctx.fillStyle = "#a2aab8";
+      ctx.font = "400 24px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      ctx.fillText(`¥${money(value("originalPrice"))}`, 296, y + 56);
+      ctx.strokeStyle = "#a2aab8";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(296, y + 47);
+      ctx.lineTo(380, y + 47);
+      ctx.stroke();
+
+      const discount = Math.max(0, Number(value("originalPrice")) - Number(value("salePrice")));
+      const saveText = discount > 0 ? `立省 ¥${Math.round(discount)}` : "立即跟团";
+      roundedRect(ctx, 512, y + 17, 132, 52, 26);
+      ctx.fillStyle = accent;
+      ctx.fill();
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "900 24px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      ctx.fillText(saveText, 532, y + 52);
+
+      y += 98;
+      roundedRect(ctx, 36, y, 648, 76, 18);
+      ctx.fillStyle = "#f4f6f9";
+      ctx.fill();
+      ctx.fillStyle = accent;
+      ctx.font = "800 23px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      ctx.fillText("团长说：", 66, y + 32);
+      ctx.fillStyle = "#3d4655";
+      ctx.font = "500 23px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      wrapText(ctx, value("leaderNote") || "这里填写团长推荐语", 160, y + 32, 500, 27, 2);
+
+      y += 86;
+      ctx.strokeStyle = "#e1e5ed";
+      ctx.setLineDash([7, 7]);
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(720, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      y += 16;
+      roundedRect(ctx, 24, y - 10, 672, 110, 18);
+      ctx.fillStyle = "#fbfcfe";
+      ctx.fill();
+      ctx.strokeStyle = "#edf0f5";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      roundedRect(ctx, 36, y, 80, 80, 16);
+      ctx.fillStyle = "#eef0f4";
+      ctx.fill();
+      ctx.save();
+      roundedRect(ctx, 36, y, 80, 80, 16);
+      ctx.clip();
+      if (qrImg) {
+        drawImageCover(ctx, qrImg, 36, y, 80, 80);
+      } else {
+        ctx.fillStyle = "#b0b8c6";
+        ctx.font = "750 20px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+        ctx.textAlign = "center";
+        ctx.fillText("二维码", 76, y + 48);
+        ctx.textAlign = "left";
+      }
+      ctx.restore();
+
+      ctx.fillStyle = "#1f2329";
+      ctx.font = "950 28px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      wrapText(ctx, value("buttonMain") || "长按识别 跟团购买", 140, y + 33, 524, 32, 1);
+      ctx.fillStyle = "#7f8998";
+      ctx.font = "650 22px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      wrapText(ctx, value("buttonSub") || "早买早发 · 手慢无", 140, y + 64, 524, 28, 1);
+
+      ctx.fillStyle = "#7f8998";
+      ctx.font = "500 19px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
+      wrapText(ctx, value("shipping") || "规格 / 发货信息", 140, y + 96, 524, 24, 1);
+    }
+
+    async function getPosterImages() {
+      const productImg = await loadImage(state.productImage);
+      const qrImg = await loadImage(state.qrImage);
+      return { productImg, qrImg };
+    }
+
+    let renderToken = 0;
+
+    async function renderCanvasPreview() {
+      const token = ++renderToken;
+      const canvas = $("previewCanvas");
+      const ctx = canvas.getContext("2d");
+      const { productImg, qrImg } = await getPosterImages();
+      if (token !== renderToken) return;
+      drawPoster(ctx, productImg, qrImg);
+    }
+
+    async function exportPoster() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 720;
+      canvas.height = 1280;
+      const ctx = canvas.getContext("2d");
+      const { productImg, qrImg } = await getPosterImages();
+      drawPoster(ctx, productImg, qrImg);
+
+      const link = document.createElement("a");
+      link.download = `快团团素材-${Date.now()}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    function bind() {
+      fields.forEach((id) => {
+        $(id).addEventListener("input", render);
+        $(id).addEventListener("change", render);
+      });
+      document.querySelectorAll(".template-option").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".template-option").forEach((item) => item.classList.remove("active"));
+          button.classList.add("active");
+          state.template = button.dataset.template;
+          render();
+        });
+      });
+
+      $("addPoint").addEventListener("click", () => {
+        if (state.points.length >= 6) return;
+        state.points.push("");
+        renderPointsEditor();
+        render();
+      });
+
+      $("productImage").addEventListener("change", (event) => {
+        readFileAsDataUrl(event.target.files[0], (src) => {
+          state.productImage = src;
+          render();
+        });
+      });
+
+      $("qrImage").addEventListener("change", (event) => {
+        readFileAsDataUrl(event.target.files[0], (src) => {
+          state.qrImage = src;
+          render();
+        });
+      });
+
+      $("resetDemo").addEventListener("click", () => {
+        $("topTag").value = "今日开团";
+        $("brandName").value = "小美优选·团长";
+        $("productTitle").value = "【新疆直发】阿克苏冰糖心苹果 5斤装";
+        $("subtitle").value = "咬一口爆汁甜脆 · 产地现摘现发";
+        $("originalPrice").value = "39.9";
+        $("salePrice").value = "19.9";
+        $("leaderNote").value = "我自己吃了两箱，真的甜！这个价格基本就是产地价了，库存不多，手慢无～";
+        $("shipping").value = "5斤/箱 · 默认圆通 · 48h 内发货 · 坏果包赔";
+        $("buttonMain").value = "长按识别 跟团购买";
+        $("buttonSub").value = "早买早发 · 手慢无";
+        $("imageRatio").value = "auto";
+        $("imageFit").value = "contain";
+        state.points = [
+          "产地直发，没有中间商加价",
+          "冰糖心占比高，一口爆汁甜",
+          "坏果包赔，售后无忧"
+        ];
+        state.productImage = "";
+        state.qrImage = "";
+        $("productImage").value = "";
+        $("qrImage").value = "";
+        renderPointsEditor();
+        render();
+      });
+
+      $("exportPng").addEventListener("click", exportPoster);
+    }
+
+    bind();
+    renderPointsEditor();
+    render();
+  </script>
+</body>
+</html>
