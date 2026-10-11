@@ -923,9 +923,9 @@
       ctx.font = "800 24px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif";
       const tagW = Math.min(220, ctx.measureText(tag).width + 48);
       roundedRect(ctx, 720 - tagW - 36, 20, tagW, 50, 25);
-      ctx.fillStyle = state.template === "clean" ? accent : "rgba(255,255,255,.25)";
+      ctx.fillStyle = "#ffd84d";
       ctx.fill();
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = "#1f2329";
       ctx.fillText(tag, 720 - tagW - 12, 53);
 
       ctx.fillStyle = "#1f2329";
@@ -963,7 +963,7 @@
 
       drawProductImage(ctx, productImg, imgX, imgY, imgW, imgH);
 
-      let y = state.template === "clean" ? imgY + 40 : imgY + imgH + 24;
+      let y = state.template === "clean" ? imgY + 40 : imgY + imgH + 56;
       ctx.textBaseline = "alphabetic";
       pointItems.forEach((point, index) => {
         const pointX = state.template === "clean" ? imgX + imgW + 30 : 90;
